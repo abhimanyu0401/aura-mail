@@ -3,7 +3,7 @@
 **Problem Statement:** SIH PS 26106 — AI-Powered Email Threat Detection, GeoLocation and Forensic Intelligence Platform (AICTE, Cyber Security Cell)
 **Status:** Pre-build. This roadmap starts from Phase 0 — nothing shipped yet.
 **Timeline:** Internal round in ~1 week. SIH Finals in ~1 month.
-**Origin:** Built starting from the Scam Shield codebase as an architectural template (multi-signal concurrent risk engine, Gemini reasoning pipeline, auth/groups infrastructure). Scam Shield remains a separate, independently maintained project for a different hackathon track, with its own Supabase project and keys. **`aura-mail` starts with a completely fresh git history** — no commits carried over from Scam Shield.
+**Repository:** `aura-mail` starts with a completely fresh git history.
 
 ---
 
@@ -15,7 +15,7 @@ Aura Mail ingests raw email (pasted source or `.eml` upload) and produces a hybr
 
 ## 2. Current Status
 
-Nothing built yet. Phase 0 has not started. Update this section as phases complete — see `STATUS.md` for the live day-to-day board.
+**Phase 0 is complete.** Repo, Supabase project + schema, Redis, and all API keys are live and verified end-to-end (local and deployed). Phase 1 is ready to start. Update this section as further phases complete — see `STATUS.md` for the live day-to-day board.
 
 ---
 
@@ -23,14 +23,18 @@ Nothing built yet. Phase 0 has not started. Update this section as phases comple
 
 ### 🎯 Pre-Internal Target (Days 1–7)
 
-#### Phase 0 — Repo & infra foundation (Owner: TBD)
+#### Phase 0 — Repo & infra foundation (Owner: TBD) ✅ Complete
 Checklist:
-- [ ] Create `aura-mail` repo with a fresh `git init` — do not clone/copy Scam Shield's `.git` history
-- [ ] Create a **new, separate** Supabase project; generate fresh publishable/secret keys (never reuse Scam Shield's project)
-- [ ] Update `.env.example` with new variable set
-- [ ] New folder convention: `lib/email-forensics/` for header/geo/domain modules, kept separate from existing content-analysis code (`lib/scam-patterns.json`, embedding logic) so the "content" and "technical forensics" halves of the engine stay cleanly separable — this also makes it easy to answer "how is this architected" in Q&A
-- [ ] Scaffold `README.md` / `roadmap.md` / `STATUS.md` (this set of docs)
-- [ ] Branch protection on `main` mirrored from Scam Shield: PR required, ≥1 approval from someone other than the author, no self-merge, no bypass list
+- [x] Create `aura-mail` repo with a fresh `git init`
+- [x] Create a dedicated Supabase project; generate fresh publishable/secret keys
+- [x] Design and run the initial schema (`profiles`, `organizations`, `organization_members`, RLS policies, `create_organization_with_admin` / `lookup_organization_by_invite_code` RPCs); saved to `supabase/migrations/0001_init.sql` and committed
+- [x] Create the Vercel project and attach Upstash Redis via Storage Marketplace; env vars synced locally with `vercel env pull`
+- [x] Gemini and Safe Browsing API keys generated and wired
+- [x] Update `.env.example` with the full variable set
+- [x] Fix `hooks/useGroups.ts` → `hooks/useOrganizations.ts` and its usage in `app/page.tsx` to match the `organizations`/`organization_members` schema (renamed completely, not just the broken calls — see Section 5 note below)
+- [x] Scaffold `README.md` / `roadmap.md` / `STATUS.md`
+- [x] Branch protection on `main`: PR required, ≥1 approval from someone other than the author, no self-merge, no bypass list
+- [ ] New folder convention: `lib/email-forensics/` for header/geo/domain modules, kept separate from existing content-analysis code (`lib/scam-patterns.json`, embedding logic) — deferred naturally to when Phase 3 adds its first file there, since Git doesn't track empty folders anyway
 
 #### Phase 1 — UI & positioning reframe (Owner: TBD)
 - Landing hero reframed around institutional email-forensics, not citizen scam-protection
@@ -38,6 +42,12 @@ Checklist:
 - SMS/WhatsApp/screenshot mode kept as a clearly secondary tab, introduced only after the email story in both UI ordering and pitch narrative
 - Visual direction shifts toward an analyst/security-dashboard feel rather than a consumer safety-shield aesthetic
 - Copy pass across all in-app strings, README, and pitch language
+- **Concrete branding items found still present during Phase 0 (not yet actioned — real work, not a text swap):**
+  - Homepage hero title is a two-line stacked `SCAM` / `SHIELD` layout, sized specifically around those two words — needs actual layout redesign, not a find-and-replace, once the new hero copy is decided
+  - `shield-logo.png` navbar image (and its `alt="Scam Shield Logo"` text) — needs a real new logo asset
+  - Fallback display name `"Shield Account"` in the profile dropdown
+  - The "Copy Alert to Share" feature's generated share text hardcodes `Scam Shield Analysis` and `Checked with Scam Shield (scamshield.vercel.app)` — user-facing content that gets copied and forwarded, so this needs both new copy and a real domain once one exists
+  - "Scam Radar" feature branding throughout the circles/reporting UI (flagged earlier — still open)
 
 #### Phase 2 — Email-shaped content engine ("quick wins") (Owner: TBD)
 - Rule-based flag vocabulary updated for email fraud (`wire transfer`, `invoice`, `gift card`, `confidential`, `urgent payment`, etc.) replacing the inherited OTP/UPI-shaped SMS flags
@@ -55,7 +65,7 @@ Checklist:
 - Different, heavier concurrent-signal set (header parse, geolocation, domain/RDAP lookups vs. just Safe Browsing) — keeping them separate avoids the email path's extra latency/failure modes leaking into the simpler, already-stable SMS path
 - Matches the existing codebase's own convention of resource-specific routes (e.g. `app/api/circles/[circleId]/report/route.ts` is its own endpoint rather than folded into a generic handler)
 - Makes Phase 12 rate limiting straightforward to tune per-route with different budgets, since email analysis is inherently more expensive (multiple external API calls) than a text-only check
-- Keeps `/api/check` low-risk and untouched, which matters since Scam Shield's original code there is already proven in production
+- Keeps `/api/check` low-risk and untouched, which matters since that code is already proven in production for the SMS/message mode
 
 #### Phase 4 — Header & authentication forensics (Owner: TBD — stretch teaser for internal)
 - Parse the `Authentication-Results` header for SPF/DKIM/DMARC verdicts — **do not** re-implement cryptographic verification; parse what the receiving mail server already computed
@@ -95,7 +105,7 @@ Checklist:
 #### Phase 9 — Forensic PDF report export (Owner: TBD)
 - Genuinely new capability — no PDF generation exists in the inherited codebase
 - `@react-pdf/renderer` (or `pdf-lib`) to produce a structured report: header breakdown, auth results, hop trace, domain intel, IOCs, synthesized narrative, recommended escalation
-- This is the institutional analogue of Scam Shield's Chakshu draft — built for incident-response/legal use, not individual complaint filing
+- Built for incident-response/legal use, not individual complaint filing — a formal escalation artifact, not a chat-window summary
 
 #### Phase 10 — Organizational accounts & campaign correlation (Owner: TBD)
 - New Supabase schema in Aura Mail's own project: `profiles`, `organizations`/`groups`, `reports` (extended with `sender_ip`, `sender_domain`)
@@ -108,7 +118,7 @@ Checklist:
 
 #### Phase 12 — Reliability & analyst-facing UX polish (Owner: TBD, split backend/frontend)
 - Rate limiting on analysis endpoint(s)
-- Verdict UI reframed for a security-analyst/institutional persona rather than the elderly/citizen framing inherited from Scam Shield
+- Verdict UI reframed for a security-analyst/institutional persona rather than an elderly/citizen framing
 - Responsive testing across breakpoints
 
 #### Phase 13 — Regression, merge, redeploy (whole team)
@@ -120,7 +130,7 @@ Checklist:
 
 #### Phase 15 — Presentation & Q&A rehearsal (whole team)
 - Practice the live demo end-to-end, including recovery if something breaks live
-- Prepare answers for: why RDAP over raw WHOIS; why parse `Authentication-Results` instead of re-verifying SPF/DKIM cryptographically; why infrastructure-based correlation over pure text similarity; the audience shift from Scam Shield's citizen framing to an institutional one; and — if asked directly — how this project relates to Scam Shield
+- Prepare answers for: why RDAP over raw WHOIS; why parse `Authentication-Results` instead of re-verifying SPF/DKIM cryptographically; why infrastructure-based correlation over pure text similarity; and why the platform targets an institutional/analyst audience rather than individual consumers
 
 #### Final buffer
 - Live-URL sanity check, rest before demo day
@@ -134,28 +144,9 @@ Checklist:
 
 ---
 
-## 5. What Carries Over From Scam Shield vs. What's Genuinely New
+## 5. Team Git Workflow
 
-| Component | Status |
-|---|---|
-| Concurrent multi-signal architecture (`Promise.all` pattern) | Reused directly — the strongest inherited asset |
-| Gemini reasoning + JSON schema output | Reused, prompt retuned for email content |
-| Embedding/pattern-matching engine | Reused mechanism, **new corpus required** (email scripts, not SMS scripts) |
-| Google Safe Browsing link check | Reused unchanged |
-| Auth (Supabase) | Reused pattern, **new project/keys**, extended schema |
-| Groups/circles + Redis reporting | Reused pattern, **schema extended** for infrastructure-based correlation |
-| Chakshu-style draft generation | Reused pattern, **new institutional report format** (Phase 9) |
-| Header/auth forensics (SPF/DKIM/DMARC, `Received:` chain) | **Entirely new** |
-| IP geolocation tracing | **Entirely new** |
-| WHOIS/RDAP domain intelligence | **Entirely new** |
-| PDF report generation | **Entirely new** — nothing like this exists in the inherited codebase |
-| Homograph/graph/sub-score/narrative innovations | **Entirely new** |
-
----
-
-## 6. Team Git Workflow
-
-Same discipline as Scam Shield, unless the team decides otherwise: `main` requires a PR and ≥1 approval from someone other than the author; no self-merge; no bypass list.
+`main` requires a PR and ≥1 approval from someone other than the author; no self-merge; no bypass list.
 
 **Phase owners are intentionally left as `TBD` throughout this document** — the team is deciding who takes each phase at kickoff time rather than pre-assigning now. Whoever picks up a phase should fill in their name in both this file and `STATUS.md` before opening a branch, so "who's doing what" stays visible to the rest of the team.
 
@@ -171,10 +162,10 @@ Same discipline as Scam Shield, unless the team decides otherwise: `main` requir
 ### Branches
 | Branch | Phase | Owner | Status |
 |---|---|---|---|
-| `phase-0-setup` | 0 | TBD | Start now |
-| `phase-1-ui-reframe` | 1 | TBD | Blocked on Phase 0 |
-| `phase-2-content-engine` | 2 | TBD | Blocked on Phase 0 |
-| `phase-3-ingestion` | 3 | TBD | Blocked on Phase 0 |
+| `phase-0-setup` | 0 | — | ✅ Done, merged to `main` |
+| `phase-1-ui-reframe` | 1 | TBD | Ready to start |
+| `phase-2-content-engine` | 2 | TBD | Ready to start |
+| `phase-3-ingestion` | 3 | TBD | Ready to start |
 | `phase-4-header-forensics` | 4 | TBD | Blocked on Phase 3 |
 | `phase-5-geo-trace` | 5 | TBD | Blocked on Phase 4 |
 | `phase-6-domain-intel` | 6 | TBD | Blocked on Phase 4 |
@@ -189,18 +180,18 @@ Same discipline as Scam Shield, unless the team decides otherwise: `main` requir
 
 ---
 
-## 7. Tech Stack Additions
+## 6. Tech Stack Additions
 
 - `mailparser` — raw email/`.eml` parsing
 - Geolocation API client (ip-api.com default, ipinfo.io fallback)
 - RDAP-over-HTTPS client for domain intelligence
 - `@react-pdf/renderer` or `pdf-lib` — PDF report generation
-- New Supabase project (separate from Scam Shield): tables likely `profiles`, `organizations`, `org_members`, `reports` (with `sender_ip`, `sender_domain`)
+- Supabase project: tables `profiles`, `organizations`, `organization_members` — `reports` planned for Phase 10, extended with `sender_ip`/`sender_domain`
 - Existing stack unchanged otherwise: Next.js, React, TypeScript, Tailwind, Gemini API, Upstash Redis, Google Safe Browsing, Vercel
 
 ---
 
-## 8. Evaluation Focus Mapping
+## 7. Evaluation Focus Mapping
 
 *(Generic hackathon judging categories — replace with SIH's actual published rubric if available.)*
 

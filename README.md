@@ -26,19 +26,13 @@ Full build plan and phase-by-phase status: [`roadmap.md`](./roadmap.md) · [`STA
 
 ---
 
-## Relationship to Scam Shield
-
-Aura Mail started from the [Scam Shield](../scam-shield) codebase as an architectural template — specifically its multi-signal concurrent risk-scoring pattern, Gemini reasoning pipeline, and auth/groups infrastructure. Scam Shield continues as a separate, independently maintained project for a different hackathon track, with its own Supabase project and API keys. Aura Mail uses **entirely separate credentials and a separate Supabase project** — no shared backend state between the two.
-
----
-
 ## Getting started
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) v18 or later
 - A Gemini API key
 - A Google Cloud API key with Safe Browsing enabled (optional — degrades gracefully)
-- A **new, dedicated** Supabase project (do not reuse Scam Shield's project or keys)
+- A dedicated Supabase project for this app
 - A geolocation API for IP hop lookups (default target: ip-api.com — no key required for low volume; see roadmap for fallback options)
 
 ### 1. Clone the repo
@@ -65,7 +59,7 @@ NEXT_PUBLIC_SUPABASE_URL=your_new_aura_mail_supabase_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_new_aura_mail_supabase_key
 ```
 
-Get your Supabase URL and Publishable key from your **new Aura Mail project's** Connect dialog — do not copy these from Scam Shield.
+Get your Supabase URL and Publishable key from your project's Connect dialog.
 
 ### 4. Run locally
 ```bash

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/app/providers/AuthProvider";
-import { useGroups } from '@/hooks/useGroups';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { AuthModal } from "@/app/components/AuthModal";
 
 interface CheckResult {
@@ -97,31 +97,31 @@ export default function Home() {
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
   const [showInviteInfo, setShowInviteInfo] = useState(false);
-  const [showGroupActionForm, setShowGroupActionForm] = useState<"none"|"join"|"create">("none");
+  const [showOrgActionForm, setShowOrgActionForm] = useState<"none"|"join"|"create">("none");
 
-  // Groups State from Hook
+  // Organizations State from Hook
   const {
-    groups,
-    loading: groupsLoading,
-    createGroupName,
+    organizations,
+    loading: orgsLoading,
+    createOrgName,
     joinInviteCode,
-    actionStatus: groupActionStatus,
-    actionMessage: groupActionMessage,
+    actionStatus: orgActionStatus,
+    actionMessage: orgActionMessage,
     newInviteCode,
     dispatch,
-    handleCreateGroup,
-    handleJoinGroup
-  } = useGroups(user);
+    handleCreateOrg,
+    handleJoinOrg
+  } = useOrganizations(user);
 
   useEffect(() => {
-    if (groups.length > 0) {
-      if (!reportCircleId || !groups.find(g => g.id === reportCircleId)) setReportCircleId(groups[0].id);
-      if (!selectedCircle || !groups.find(g => g.id === selectedCircle)) setSelectedCircle(groups[0].id);
+    if (organizations.length > 0) {
+      if (!reportCircleId || !organizations.find(g => g.id === reportCircleId)) setReportCircleId(organizations[0].id);
+      if (!selectedCircle || !organizations.find(g => g.id === selectedCircle)) setSelectedCircle(organizations[0].id);
     } else {
       setReportCircleId("");
       setSelectedCircle("");
     }
-  }, [groups]);
+  }, [organizations]);
 
 
 
@@ -857,13 +857,13 @@ export default function Home() {
                       value={reportCircleId}
                       onChange={(e) => setReportCircleId(e.target.value)}
                       className="flex-1 rounded-xl bg-[#181818] border border-white/15 text-slate-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7CB8F2]"
-                      disabled={groups.length === 0}
+                      disabled={organizations.length === 0}
                     >
-                      {groups.length === 0 ? (
-                        <option value="" className="bg-[#232323]">No groups available</option>
+                      {organizations.length === 0 ? (
+                        <option value="" className="bg-[#232323]">No organizations available</option>
                       ) : (
-                        groups.map(group => (
-                          <option key={group.id} value={group.id} className="bg-[#232323]">{group.name}</option>
+                        organizations.map(org => (
+                          <option key={org.id} value={org.id} className="bg-[#232323]">{org.name}</option>
                         ))
                       )}
                     </select>
@@ -875,14 +875,14 @@ export default function Home() {
                       {reportStatus === "loading" ? "Reporting..." : reportStatus === "success" ? "✓ Reported" : "Report"}
                     </button>
                   </div>
-                  {groups.length === 0 && !groupsLoading && (
+                  {organizations.length === 0 && !orgsLoading && (
                     <div className="mt-4 p-4 rounded-xl border border-dashed border-white/20 bg-white/5 text-center space-y-2">
                       <p className="text-sm text-slate-300">You need to join or create a circle before reporting.</p>
                       <button 
                         onClick={() => { setAppMode("radar"); document.getElementById("active-tool-view")?.scrollIntoView({ behavior: "smooth" }); }}
                         className="text-[#7CB8F2] text-xs font-bold hover:underline"
                       >
-                        Go to Scam Radar to manage groups →
+                        Go to Scam Radar to manage organizations →
                       </button>
                     </div>
                   )}
@@ -927,18 +927,18 @@ export default function Home() {
                         dispatch({ type: 'DISMISS_ACTION_MESSAGE' });
                       }}
                       className="flex-1 sm:flex-none rounded-2xl bg-[#232323] border border-black/10 text-slate-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#7CB8F2] shadow-xl"
-                      disabled={groups.length === 0}
+                      disabled={organizations.length === 0}
                     >
-                      {groups.length === 0 ? (
-                        <option value="" className="bg-[#232323]">No groups available</option>
+                      {organizations.length === 0 ? (
+                        <option value="" className="bg-[#232323]">No organizations available</option>
                       ) : (
-                        groups.map(group => (
-                          <option key={group.id} value={group.id} className="bg-[#232323]">{group.name}</option>
+                        organizations.map(org => (
+                          <option key={org.id} value={org.id} className="bg-[#232323]">{org.name}</option>
                         ))
                       )}
                     </select>
                     
-                    {groups.length > 0 && (
+                    {organizations.length > 0 && (
                       <button
                         onClick={() => {
                           setShowInviteInfo(!showInviteInfo);
@@ -954,16 +954,16 @@ export default function Home() {
                   
                   <div className="flex w-full sm:w-auto items-center gap-2">
                     <button
-                      onClick={() => setShowGroupActionForm(prev => prev === "join" ? "none" : "join")}
-                      className={`px-4 py-2.5 rounded-2xl text-sm font-bold transition-colors cursor-pointer border shadow-xl ${showGroupActionForm === "join" ? "bg-[#31487A] text-white border-[#7CB8F2]" : "bg-[#232323] text-slate-300 border-black/10 hover:bg-[#31487A] hover:text-white"}`}
+                      onClick={() => setShowOrgActionForm(prev => prev === "join" ? "none" : "join")}
+                      className={`px-4 py-2.5 rounded-2xl text-sm font-bold transition-colors cursor-pointer border shadow-xl ${showOrgActionForm === "join" ? "bg-[#31487A] text-white border-[#7CB8F2]" : "bg-[#232323] text-slate-300 border-black/10 hover:bg-[#31487A] hover:text-white"}`}
                     >
-                      Join Group
+                      Join Organization
                     </button>
                     <button
-                      onClick={() => setShowGroupActionForm(prev => prev === "create" ? "none" : "create")}
-                      className={`px-4 py-2.5 rounded-2xl text-sm font-bold transition-colors cursor-pointer border shadow-xl ${showGroupActionForm === "create" ? "bg-[#31487A] text-white border-[#7CB8F2]" : "bg-[#232323] text-slate-300 border-black/10 hover:bg-[#31487A] hover:text-white"}`}
+                      onClick={() => setShowOrgActionForm(prev => prev === "create" ? "none" : "create")}
+                      className={`px-4 py-2.5 rounded-2xl text-sm font-bold transition-colors cursor-pointer border shadow-xl ${showOrgActionForm === "create" ? "bg-[#31487A] text-white border-[#7CB8F2]" : "bg-[#232323] text-slate-300 border-black/10 hover:bg-[#31487A] hover:text-white"}`}
                     >
-                      Create Group
+                      Create Organization
                     </button>
                     <button
                       onClick={fetchFeed}
@@ -976,15 +976,15 @@ export default function Home() {
                 </div>
 
             {/* Persistent Invite Info */}
-            {showInviteInfo && groups.find(g => g.id === selectedCircle)?.invite_code && (
+            {showInviteInfo && organizations.find(g => g.id === selectedCircle)?.invite_code && (
               <div className="p-5 rounded-2xl border border-[#7CB8F2]/30 bg-[#7CB8F2]/10 text-center space-y-3 mb-6 animate-fade-in">
-                <p className="text-sm font-semibold text-[#7CB8F2]">Invite others to {groups.find(g => g.id === selectedCircle)?.name}</p>
+                <p className="text-sm font-semibold text-[#7CB8F2]">Invite others to {organizations.find(g => g.id === selectedCircle)?.name}</p>
                 <div className="flex items-center justify-center gap-2">
                   <code className="text-lg font-mono bg-black/40 px-4 py-2 rounded-xl text-slate-200 border border-white/10">
-                    {groups.find(g => g.id === selectedCircle)?.invite_code}
+                    {organizations.find(g => g.id === selectedCircle)?.invite_code}
                   </code>
                   <button
-                    onClick={() => navigator.clipboard.writeText(groups.find(g => g.id === selectedCircle)?.invite_code ?? '')}
+                    onClick={() => navigator.clipboard.writeText(organizations.find(g => g.id === selectedCircle)?.invite_code ?? '')}
                     className="px-3 py-2 bg-[#7CB8F2]/20 hover:bg-[#7CB8F2]/30 text-[#7CB8F2] rounded-xl font-semibold text-sm transition-colors cursor-pointer"
                   >
                     Copy
@@ -995,9 +995,9 @@ export default function Home() {
             )}
 
             {/* Action Message (Join/Create Success or Error) */}
-            {groupActionMessage && (
-              <div className={`p-4 rounded-xl text-sm mb-6 flex justify-between items-center animate-fade-in ${groupActionStatus === "error" ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"}`}>
-                <span>{groupActionMessage}</span>
+            {orgActionMessage && (
+              <div className={`p-4 rounded-xl text-sm mb-6 flex justify-between items-center animate-fade-in ${orgActionStatus === "error" ? "bg-red-500/10 text-red-400 border border-red-500/20" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"}`}>
+                <span>{orgActionMessage}</span>
                 <button onClick={() => dispatch({ type: 'DISMISS_ACTION_MESSAGE' })} className="text-xs opacity-70 hover:opacity-100 cursor-pointer">✕</button>
               </div>
             )}
@@ -1005,7 +1005,7 @@ export default function Home() {
             {/* Success Creation Invite Info */}
             {newInviteCode && (
               <div className="p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 text-center space-y-3 mb-6 animate-fade-in">
-                <p className="text-sm font-semibold text-amber-300">Group created! Here is your invite code:</p>
+                <p className="text-sm font-semibold text-amber-300">Organization created! Here is your invite code:</p>
                 <div className="flex items-center justify-center gap-2">
                   <code className="text-lg font-mono bg-black/40 px-4 py-2 rounded-xl text-slate-200 border border-white/10">
                     {newInviteCode}
@@ -1033,8 +1033,8 @@ export default function Home() {
               </div>
             )}
 
-            {/* Permanent Join Group Inline Form */}
-            {showGroupActionForm === "join" && (
+            {/* Permanent Join Organization Inline Form */}
+            {showOrgActionForm === "join" && (
               <div className="mb-6 p-5 rounded-2xl bg-[#181818] border border-white/5 animate-fade-in">
                 <h3 className="font-semibold text-slate-200 mb-4">Have an invite code?</h3>
                 <div className="flex gap-3 flex-col sm:flex-row">
@@ -1046,43 +1046,43 @@ export default function Home() {
                     className="flex-1 rounded-xl bg-[#232323] border border-white/10 text-slate-100 px-4 py-2 text-sm focus:outline-none focus:border-[#7CB8F2]"
                   />
                   <button
-                    onClick={handleJoinGroup}
-                    disabled={groupActionStatus === "loading" || !joinInviteCode.trim()}
+                    onClick={handleJoinOrg}
+                    disabled={orgActionStatus === "loading" || !joinInviteCode.trim()}
                     className="sm:w-32 py-2.5 rounded-xl text-sm font-bold bg-[#232323] border border-white/15 hover:border-white/30 text-white disabled:opacity-50 transition-colors cursor-pointer"
                   >
-                    {groupActionStatus === "loading" ? "Joining..." : "Join Group"}
+                    {orgActionStatus === "loading" ? "Joining..." : "Join Organization"}
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Permanent Create Group Inline Form */}
-            {showGroupActionForm === "create" && (
+            {/* Permanent Create Organization Inline Form */}
+            {showOrgActionForm === "create" && (
               <div className="mb-6 p-5 rounded-2xl bg-[#181818] border border-white/5 animate-fade-in">
-                <h3 className="font-semibold text-slate-200 mb-4">Create a New Group</h3>
+                <h3 className="font-semibold text-slate-200 mb-4">Create a New Organization</h3>
                 <div className="flex gap-3 flex-col sm:flex-row">
                   <input
                     type="text"
-                    value={createGroupName}
-                    onChange={(e) => dispatch({ type: 'SET_INPUT', field: 'createGroupName', value: e.target.value })}
-                    placeholder="e.g. Sharma Family Group"
+                    value={createOrgName}
+                    onChange={(e) => dispatch({ type: 'SET_INPUT', field: 'createOrgName', value: e.target.value })}
+                    placeholder="e.g. Acme Corp Security Team"
                     className="flex-1 rounded-xl bg-[#232323] border border-white/10 text-slate-100 px-4 py-2 text-sm focus:outline-none focus:border-[#7CB8F2]"
                   />
                   <button
-                    onClick={handleCreateGroup}
-                    disabled={groupActionStatus === "loading" || !createGroupName.trim()}
+                    onClick={handleCreateOrg}
+                    disabled={orgActionStatus === "loading" || !createOrgName.trim()}
                     className="sm:w-32 py-2.5 rounded-xl text-sm font-bold bg-[#31487A] hover:bg-[#7CB8F2] hover:text-[#0f172a] text-white disabled:opacity-50 transition-colors cursor-pointer"
                   >
-                    {groupActionStatus === "loading" ? "Creating..." : "Create Group"}
+                    {orgActionStatus === "loading" ? "Creating..." : "Create Organization"}
                   </button>
                 </div>
               </div>
             )}
 
-            {groups.length === 0 && !groupsLoading ? (
+            {organizations.length === 0 && !orgsLoading ? (
               <div className="rounded-3xl border border-black/10 bg-[#232323] text-white p-6 sm:p-8 shadow-2xl mb-8 space-y-8 text-center animate-fade-in">
                 <h2 className="text-xl font-bold text-slate-100 mb-2">Welcome to Scam Radar</h2>
-                <p className="text-sm text-slate-400">You are not in any groups yet. Use the buttons above to join a circle or create your own to start sharing reports with your community.</p>
+                <p className="text-sm text-slate-400">You are not in any organizations yet. Use the buttons above to join a circle or create your own to start sharing reports with your community.</p>
               </div>
             ) : (
 

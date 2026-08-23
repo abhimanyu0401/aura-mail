@@ -1,7 +1,7 @@
 import { useReducer, useCallback, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-export type Group = {
+export type Organization = {
   id: string;
   name: string;
   invite_code: string;
@@ -9,9 +9,9 @@ export type Group = {
 };
 
 type State = {
-  groups: Group[];
+  organizations: Organization[];
   loading: boolean;
-  createGroupName: string;
+  createOrgName: string;
   joinInviteCode: string;
   actionStatus: "idle" | "loading" | "success" | "error";
   actionMessage: string;
@@ -19,9 +19,9 @@ type State = {
 };
 
 const initialState: State = {
-  groups: [],
+  organizations: [],
   loading: true,
-  createGroupName: "",
+  createOrgName: "",
   joinInviteCode: "",
   actionStatus: "idle",
   actionMessage: "",
@@ -30,9 +30,9 @@ const initialState: State = {
 
 type Action =
   | { type: 'FETCH_START' }
-  | { type: 'FETCH_SUCCESS'; payload: Group[] }
+  | { type: 'FETCH_SUCCESS'; payload: Organization[] }
   | { type: 'RESET' }
-  | { type: 'SET_INPUT'; field: 'createGroupName' | 'joinInviteCode'; value: string }
+  | { type: 'SET_INPUT'; field: 'createOrgName' | 'joinInviteCode'; value: string }
   | { type: 'SET_ACTION_STATE'; status: State['actionStatus']; message: string; newCode?: string }
   | { type: 'DISMISS_ACTION_MESSAGE' }
   | { type: 'DISMISS_INVITE_CODE' };
@@ -42,7 +42,7 @@ function reducer(state: State, action: Action): State {
     case 'FETCH_START':
       return { ...state, loading: true };
     case 'FETCH_SUCCESS':
-      return { ...state, groups: action.payload, loading: false };
+      return { ...state, organizations: action.payload, loading: false };
     case 'RESET':
       return initialState;
     case 'SET_INPUT':
@@ -63,10 +63,10 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export function useGroups(user: any) {
+export function useOrganizations(user: any) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const fetchGroups = useCallback(async () => {
+  const fetchOrganizations = useCallback(async () => {
     if (!user) {
       dispatch({ type: 'RESET' });
       // We must explicitly set loading to false after reset because initialState.loading is true
@@ -91,9 +91,9 @@ export function useGroups(user: any) {
 
       // Deduplicate as a defensive safety net in case database unique constraint isn't acting perfectly yet
       const seen = new Set();
-      const deduplicated = formatted.filter(group => {
-        if (seen.has(group.id)) return false;
-        seen.add(group.id);
+      const deduplicated = formatted.filter(org => {
+        if (seen.has(org.id)) return false;
+        seen.add(org.id);
         return true;
       });
 
@@ -105,9 +105,9 @@ export function useGroups(user: any) {
     return [];
   }, [user]);
 
-  const handleCreateGroup = async () => {
-    if (!user) throw new Error("Must be logged in to create a group");
-    if (!state.createGroupName.trim()) return;
+  const handleCreateOrg = async () => {
+    if (!user) throw new Error("Must be logged in to create an organization");
+    if (!state.createOrgName.trim()) return;
 
     dispatch({ type: 'SET_ACTION_STATE', status: 'loading', message: '', newCode: '' });
 
@@ -122,22 +122,22 @@ export function useGroups(user: any) {
       }
 
       const { error } = await supabase.rpc('create_organization_with_admin', {
-        org_name: state.createGroupName,
+        org_name: state.createOrgName,
         invite_code: code
       });
 
       if (error) throw error;
 
-      dispatch({ type: 'SET_ACTION_STATE', status: 'success', message: 'Group created successfully!', newCode: code });
-      dispatch({ type: 'SET_INPUT', field: 'createGroupName', value: '' });
-      await fetchGroups();
+      dispatch({ type: 'SET_ACTION_STATE', status: 'success', message: 'Organization created successfully!', newCode: code });
+      dispatch({ type: 'SET_INPUT', field: 'createOrgName', value: '' });
+      await fetchOrganizations();
     } catch (err: any) {
-      dispatch({ type: 'SET_ACTION_STATE', status: 'error', message: err.message || 'Failed to create group.' });
+      dispatch({ type: 'SET_ACTION_STATE', status: 'error', message: err.message || 'Failed to create organization.' });
     }
   };
 
-  const handleJoinGroup = async () => {
-    if (!user) throw new Error("Must be logged in to join a group");
+  const handleJoinOrg = async () => {
+    if (!user) throw new Error("Must be logged in to join an organization");
     if (!state.joinInviteCode.trim()) return;
 
     dispatch({ type: 'SET_ACTION_STATE', status: 'loading', message: '', newCode: '' });
@@ -145,53 +145,53 @@ export function useGroups(user: any) {
     try {
       const supabase = createClient();
 
-      const { data: groupData, error: lookupError } = await supabase.rpc('lookup_group_by_invite_code', {
+      const { data: orgData, error: lookupError } = await supabase.rpc('lookup_organization_by_invite_code', {
         lookup_code: state.joinInviteCode
       });
 
       if (lookupError) throw lookupError;
-      if (!groupData || groupData.length === 0) {
-        throw new Error("Invalid invite code or group not found.");
+      if (!orgData || orgData.length === 0) {
+        throw new Error("Invalid invite code or organization not found.");
       }
 
-      const groupId = groupData[0].id;
+      const orgId = orgData[0].id;
 
       // Pre-flight check: acts as a fast-fail UX convenience
-      if (state.groups.some(g => g.id === groupId)) {
-        throw new Error("You are already a member of this group.");
+      if (state.organizations.some(o => o.id === orgId)) {
+        throw new Error("You are already a member of this organization.");
       }
 
       const { error: joinError } = await supabase
-        .from('group_members')
+        .from('organization_members')
         .insert({
-          group_id: groupId,
+          organization_id: orgId,
           user_id: user.id,
           role: 'member'
         });
 
       if (joinError) {
         // This is the ultimate source of truth caught from the DB constraint
-        if (joinError.code === '23505') throw new Error("You are already a member of this group.");
+        if (joinError.code === '23505') throw new Error("You are already a member of this organization.");
         throw joinError;
       }
 
-      dispatch({ type: 'SET_ACTION_STATE', status: 'success', message: `Successfully joined ${groupData[0].name}!` });
+      dispatch({ type: 'SET_ACTION_STATE', status: 'success', message: `Successfully joined ${orgData[0].name}!` });
       dispatch({ type: 'SET_INPUT', field: 'joinInviteCode', value: '' });
-      await fetchGroups();
+      await fetchOrganizations();
     } catch (err: any) {
-      dispatch({ type: 'SET_ACTION_STATE', status: 'error', message: err.message || 'Failed to join group.' });
+      dispatch({ type: 'SET_ACTION_STATE', status: 'error', message: err.message || 'Failed to join organization.' });
     }
   };
 
   useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+    fetchOrganizations();
+  }, [fetchOrganizations]);
 
   return {
     ...state,
     dispatch,
-    fetchGroups,
-    handleCreateGroup,
-    handleJoinGroup
+    fetchOrganizations,
+    handleCreateOrg,
+    handleJoinOrg
   };
 }

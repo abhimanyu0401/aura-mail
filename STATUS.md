@@ -6,22 +6,21 @@ _Update this when you start, pause, or finish a session — and always as part o
 
 ## 🔨 In Progress
 
-| Phase | Feature | Owner | Branch | Status |
-|---|---|---|---|---|
-| 0 | Repo & infra foundation | TBD | `phase-0-setup` | Not started |
+_(nothing currently active — pick a Phase 1–3 branch and add yourself here when you start)_
 
 ## ✅ Done & Merged
 
-_(none yet — project starts from Phase 0)_
+| Phase | Feature | Notes |
+|---|---|---|
+| 0 | Repo & infra foundation | Repo created with fresh git history; Supabase project + `profiles`/`organizations`/`organization_members` schema live (migration committed at `supabase/migrations/0001_init.sql`); Upstash Redis attached via Vercel Storage Marketplace; Gemini + Safe Browsing keys wired; branch protection on `main` live; verified end-to-end both locally and on the deployed Vercel URL |
 
 ## ⏳ Waiting / Blocked
 
-- Phases 1–12 — all blocked on Phase 0 (new repo, new Supabase project, fresh keys)
-- See `roadmap.md` Section 6 for the full branch dependency table
+- Phases 1–12 are all unblocked and ready to start — see `roadmap.md` Section 5 for the branch dependency table
 
 ## ⚠️ Known issues / things to flag for others
 
-- `hooks/useGroups.ts` still references old `groups`/`group_members` table names — schema was renamed to `organizations`/`organization_members`. Needs an agent-assisted rename pass. Group/circle creation will fail until this is fixed.
+- **For Phase 1:** several Scam Shield branding items are still live in `app/page.tsx` — the stacked `SCAM`/`SHIELD` hero title (needs real layout redesign, not a text swap), `shield-logo.png` + its alt text, the `"Shield Account"` fallback name, the "Copy Alert to Share" feature's hardcoded `Scam Shield Analysis` / `scamshield.vercel.app` share text, and "Scam Radar" feature naming. See `roadmap.md` Phase 1 for the full list. Not blocking — flagged so it isn't lost.
 
 ## How to use this file
 
