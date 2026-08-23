@@ -1,6 +1,6 @@
-# Scam Shield — Live Status
+# Aura Mail — Live Status
 
-_Update this when you start, pause, or finish a session — and always as part of your PR. This is a status board, not documentation (that's roadmap.md)._
+_Update this when you start, pause, or finish a session — and always as part of your PR. This is a status board, not documentation (that's `roadmap.md`)._
 
 ---
 
@@ -8,25 +8,20 @@ _Update this when you start, pause, or finish a session — and always as part o
 
 | Phase | Feature | Owner | Branch | Status |
 |---|---|---|---|---|
-| 10 | Voice/audio input | Sneha | `feature/audio-input` | Starting |
-| 11 | Named community confirmations | Abhimanyu | `feature/community-confirmations` | Ready to start — Phase 9 schema fully merged |
+| 0 | Repo & infra foundation | TBD | `phase-0-setup` | Not started |
 
 ## ✅ Done & Merged
 
-- Phases 1-8 (see `roadmap.md` Section 2 for full detail)
-- Phase 9a: Supabase auth foundation (`feature/supabase-auth`, merged)
-- Phase 9b: Groups & invite-only circles (`feature/circles-groups`, merged) — invite-code display, state-leak on auth transitions, auth-gated Radar view, permanent join/create entry points, state consolidated into `useGroups` hook
+_(none yet — project starts from Phase 0)_
 
 ## ⏳ Waiting / Blocked
 
-- Phase 12 backend (rate limiting) — not started, independent, can start anytime
-- Phase 12 frontend (accessibility/verdict banner) — not started, independent, can start anytime
+- Phases 1–12 — all blocked on Phase 0 (new repo, new Supabase project, fresh keys)
+- See `roadmap.md` Section 6 for the full branch dependency table
 
 ## ⚠️ Known issues / things to flag for others
 
-_Add a line here if you hit something that affects shared code — `page.tsx` especially, since Phases 10, 11, and 12 all touch it. Remove the line once it's resolved._
-
-- (none currently)
+- `hooks/useGroups.ts` still references old `groups`/`group_members` table names — schema was renamed to `organizations`/`organization_members`. Needs an agent-assisted rename pass. Group/circle creation will fail until this is fixed.
 
 ## How to use this file
 

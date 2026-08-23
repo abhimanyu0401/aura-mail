@@ -1,40 +1,34 @@
-# Scam Shield 🛡️
+# Aura Mail 🔍✉️
 
-An AI-powered tool that instantly checks any suspicious message or screenshot for scam red flags — combining rule-based checks, real-time threat-intelligence lookup, embedding-based pattern matching, and Gemini reasoning into a single risk score, plain-language explanation, and a ready-to-file Chakshu complaint draft.
+An AI-powered email threat detection, geolocation, and forensic intelligence platform — combining semantic/content analysis, authentication forensics, IP hop geolocation, and domain intelligence into a single risk score, a plain-language attack narrative, and an exportable forensic report.
 
-Built for **Bharat Pragati PS1 — AI Deepfake & Scam Detection**.
+Built for **Smart India Hackathon — PS 26106: AI-Powered Email Threat Detection, GeoLocation and Forensic Intelligence Platform** (AICTE, Cyber Security Cell).
 
-Full architecture reference and future roadmap: [`roadmap.md`](./roadmap.md)
-
----
-
-## What it does
-
-- **Paste a message or upload a screenshot** — Gemini Vision OCR extracts text from screenshots automatically
-- **Multi-signal analysis:** rule-based red-flag checks + Google Safe Browsing link lookup (run concurrently, zero added latency) + cosine-similarity match against 28 curated Indian scam scripts + Gemini reasoning — all merged into one result
-- **Risk score (0–100)** with a plain-language explanation in English or Hindi
-- **Auto-generated Chakshu complaint draft** on any high-risk result — same Gemini call, no extra API cost. Includes scam type, description, and entities (numbers, links, amounts) extracted from the message
-- **Channel routing:** if the message suggests money has already been lost, the UI routes you to the Cyber Crime Helpline (1930 / cybercrime.gov.in) instead of Chakshu
-- **Copy Alert to Share** — formats the result as clean, ready-to-paste WhatsApp text, no backend call
-- **Scam Radar** — report to a real, invite-only trust circle so others in your group are warned the moment you spot a scam
-- **Real accounts** — sign up with email + password; Personal Check stays fully login-free
-- **Invite-only groups** — create a named circle and get a shareable invite code, or join one with a code someone shares with you
+Full build plan and phase-by-phase status: [`roadmap.md`](./roadmap.md) · [`STATUS.md`](./STATUS.md)
 
 ---
 
-## Features shipped
+## What it does (target state — build in progress)
 
-- ✅ Text-paste scam analysis
-- ✅ Screenshot upload with Gemini Vision OCR
-- ✅ Multilingual explanations (English / Hindi)
-- ✅ 28-pattern embedding library (cosine similarity, `gemini-embedding-001`)
-- ✅ Google Safe Browsing real-time malicious-link detection
-- ✅ Auto-generated Chakshu complaint draft (schema-extended, zero extra API cost)
-- ✅ Copy Alert to Share — WhatsApp-ready formatted text
-- ✅ Real accounts — email/password sign up & sign in (Supabase Auth)
-- ✅ Invite-only trust circles — create a group, share an invite code, join via code
-- ✅ Scam Radar with real group-scoped feeds, similarity clustering, Redis-backed storage
-- ✅ Live on Vercel
+- **Paste raw email source or upload a `.eml` file** — the system parses the full technical envelope, not just the rendered text
+- **Multi-signal forensic analysis:**
+  - Semantic/content analysis via Gemini reasoning + embedding-based pattern matching against a curated library of email-specific scam scripts (BEC, invoice fraud, executive impersonation, credential harvesting)
+  - Authentication forensics — SPF/DKIM/DMARC verdicts (parsed from `Authentication-Results`), `Received:` chain reconstruction, Reply-To/Return-Path mismatch detection
+  - IP hop extraction and geolocation tracing across the mail relay path
+  - Domain intelligence — WHOIS/RDAP lookup, newly-registered-domain flagging, homograph/lookalike-domain detection
+  - Google Safe Browsing link verification (inherited, unchanged)
+- **Sub-scores, not a black box** — content-trust, header-integrity, and domain-trust reported separately, feeding one final risk score
+- **Synthesized attack narrative** — signals stitched into a single plain-language sentence explaining the likely attack (e.g. "a domain registered four days ago is impersonating your CFO to request an urgent wire transfer")
+- **Attachment IOC extraction** — attachment hashes (SHA-256) surfaced as indicators of compromise
+- **Exportable forensic PDF report** — header breakdown, auth results, hop trace, domain intel, IOCs, narrative, recommended escalation — built for institutional/incident-response use, not individual complaint filing
+- **Organizational accounts & campaign correlation** — invite-only org circles where members flag and correlate emails sharing sending infrastructure, not just similar wording
+- **Secondary mode: SMS/WhatsApp scam check** — the original message/screenshot analysis engine, kept as an additional channel rather than the primary pitch
+
+---
+
+## Relationship to Scam Shield
+
+Aura Mail started from the [Scam Shield](../scam-shield) codebase as an architectural template — specifically its multi-signal concurrent risk-scoring pattern, Gemini reasoning pipeline, and auth/groups infrastructure. Scam Shield continues as a separate, independently maintained project for a different hackathon track, with its own Supabase project and API keys. Aura Mail uses **entirely separate credentials and a separate Supabase project** — no shared backend state between the two.
 
 ---
 
@@ -42,13 +36,15 @@ Full architecture reference and future roadmap: [`roadmap.md`](./roadmap.md)
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) v18 or later
-- A Gemini API key (free tier works)
-- Optional: a Google Cloud API key with Safe Browsing enabled (the app degrades gracefully without it)
+- A Gemini API key
+- A Google Cloud API key with Safe Browsing enabled (optional — degrades gracefully)
+- A **new, dedicated** Supabase project (do not reuse Scam Shield's project or keys)
+- A geolocation API for IP hop lookups (default target: ip-api.com — no key required for low volume; see roadmap for fallback options)
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/<your-username>/scam-shield.git
-cd scam-shield
+git clone https://github.com/<your-username>/aura-mail.git
+cd aura-mail
 ```
 
 ### 2. Install dependencies
@@ -59,20 +55,17 @@ npm install
 ### 3. Set up environment variables
 ```bash
 cp .env.example .env.local
-# Windows: copy .env.example .env.local
 ```
 
-Open `.env.local` and fill in:
+Fill in:
 ```
 GEMINI_API_KEY=your_gemini_key_here
 SAFE_BROWSING_API_KEY=your_google_cloud_key_here   # optional
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+NEXT_PUBLIC_SUPABASE_URL=your_new_aura_mail_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_new_aura_mail_supabase_key
 ```
 
-Get a Gemini key at [aistudio.google.com](https://aistudio.google.com) → Get API key → Create API key.
-
-Get your Supabase URL and Publishable key from your project's **Connect** dialog (use the Publishable key, not the legacy anon key).
+Get your Supabase URL and Publishable key from your **new Aura Mail project's** Connect dialog — do not copy these from Scam Shield.
 
 ### 4. Run locally
 ```bash
@@ -82,23 +75,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Testing the main features
+## Tech stack
 
-| What to test | How |
-|---|---|
-| Text analysis | Paste a suspicious message, click **Check for Scam** |
-| Screenshot analysis | Switch to **Upload Screenshot**, drop a message screenshot |
-| Hindi explanation | Select **हिं** before checking |
-| Chakshu draft | Use a clear scam message — draft appears at risk ≥ 75 |
-| Copy Draft / Copy Alert | Click the copy buttons, paste into any text editor |
-| Safe Browsing | Include a known phishing URL in the pasted text |
-| Sign up | Click **Sign In**, switch to Sign Up, use any email + password |
-| Create a circle | Go to **Scam Radar**, click **Create Group**, name it, copy the invite code |
-| Join a circle | Click **Join Group**, paste a valid invite code from someone else |
-| Scam Radar | With a group joined, report a high-risk result, click **↻** to refresh the feed |
+Next.js (App Router) · React · TypeScript · Tailwind CSS · Gemini API (`@google/genai`) · Google Safe Browsing Lookup API · Supabase (Postgres + Auth, new project) · Upstash Redis · Vercel
+
+**New for this project:**
+- `mailparser` — raw email/`.eml` header and body parsing
+- Geolocation API integration for IP hop tracing
+- RDAP-over-HTTPS for domain/WHOIS intelligence
+- `@react-pdf/renderer` (or `pdf-lib`) — forensic PDF report generation
 
 ---
 
-## Tech stack
+## Status
 
-Next.js (App Router) · React · TypeScript · Tailwind CSS · Gemini API (`@google/genai`) · Google Safe Browsing Lookup API · Supabase (Postgres + Auth) · Upstash Redis · Vercel
+This project is under active build. See [`STATUS.md`](./STATUS.md) for what's currently in progress, and [`roadmap.md`](./roadmap.md) for the full phase-by-phase plan.

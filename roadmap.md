@@ -1,117 +1,210 @@
-# Scam Shield — Project Roadmap (Finals Round)
-**Problem Statement:** Bharat Pragati PS1 — AI Deepfake & Scam Detection
-**Status:** Idea round passed — advancing to Finals. Phases 1-8 shipped and deployed. This document reactivates the previously-deferred Future Roadmap as an active 2-week build plan.
-**Finals format:** In-person live demo, presentation, and Q&A. Timeline: 2 weeks.
+# Aura Mail — Project Roadmap
+
+**Problem Statement:** SIH PS 26106 — AI-Powered Email Threat Detection, GeoLocation and Forensic Intelligence Platform (AICTE, Cyber Security Cell)
+**Status:** Pre-build. This roadmap starts from Phase 0 — nothing shipped yet.
+**Timeline:** Internal round in ~1 week. SIH Finals in ~1 month.
+**Origin:** Built starting from the Scam Shield codebase as an architectural template (multi-signal concurrent risk engine, Gemini reasoning pipeline, auth/groups infrastructure). Scam Shield remains a separate, independently maintained project for a different hackathon track, with its own Supabase project and keys. **`aura-mail` starts with a completely fresh git history** — no commits carried over from Scam Shield.
 
 ---
 
 ## 1. Elevator Pitch
 
-Scam Shield is an AI tool that instantly checks any suspicious message, screenshot, or voice note/call recording for scam red flags — combining rule-based checks, real-time threat-intelligence lookup (Google Safe Browsing), embedding-based pattern matching against 28 curated Indian scam scripts, and Gemini reasoning into one risk score, plain-language explanation, and an auto-generated Chakshu-style complaint draft. Real, invite-only trust circles let members warn and confirm scams together — with named accounts, not simulated demo groups.
+Aura Mail ingests raw email (pasted source or `.eml` upload) and produces a hybrid forensic verdict combining semantic/content analysis (Gemini reasoning + embedding-based matching against curated phishing/BEC scripts), authentication forensics (SPF/DKIM/DMARC, `Received:` chain reconstruction), IP hop geolocation tracing, and domain intelligence (WHOIS/RDAP, lookalike-domain detection) — merged into one risk score with separate trust sub-scores, a synthesized plain-language attack narrative, and an exportable forensic PDF report. Organizational trust circles let institutional members correlate and confirm campaigns hitting multiple people from shared sending infrastructure.
 
 ---
 
-## 2. What's Shipped (Phases 1-8, Deployed)
+## 2. Current Status
 
-- Text-paste and screenshot scam analysis (rule-based checks + Gemini reasoning + Gemini vision OCR)
-- Multilingual explanations (English/Hindi)
-- Embedding-based pattern matching against 28 curated Indian scam scripts (cosine similarity, `gemini-embedding-001`)
-- Google Safe Browsing integration — concurrent, fails safe
-- Scam Radar: two demo circles, similarity clustering, Redis-backed (Upstash) storage
-- Auto-generated Chakshu-style complaint draft with financial-loss routing to 1930/cybercrime.gov.in
-- "Copy alert to share externally" formatted text
-- Full UI redesign (dev_abhash branch, merged): 3D hero grid, custom color system, Bebas Neue display type — verified to preserve accessibility (readable body text, correct red/green risk signaling) and full feature functionality across text, screenshot, multilingual, and Scam Radar flows
-- Live on Vercel, branch protection active on `main` (PR required to merge)
+Nothing built yet. Phase 0 has not started. Update this section as phases complete — see `STATUS.md` for the live day-to-day board.
 
 ---
 
-## 3. Finals Roadmap — Active Build (Weeks 1-2)
+## 3. Build Plan
 
-### Phase 9 — Real accounts & invite-only groups (Days 1-2, owner: Abhimanyu)
-Supabase (Postgres + auth). Email/password/display-name signup, no email-confirmation wait. Tables: `profiles` (id, display_name), `groups` (id, name, created_by, invite_code), `group_members` (group_id, user_id, role: admin/member, joined_at). Invite-link based joining, admin-revocable/regenerable codes. Personal Check stays fully login-free. Existing Redis reports layer kept as-is — real group UUIDs replace the two hardcoded circle-name strings. Admin can remove members and revoke invite links; any member can leave. Own branch (`feature/supabase-auth` + `feature/circles-groups`) given the structural risk — this is the one phase allowed to touch routing/auth middleware.
+### 🎯 Pre-Internal Target (Days 1–7)
 
-**Schema note:** `group_members` uses `(group_id, user_id)` as its **primary key**, which enforces membership uniqueness at the storage layer. A separately-named unique constraint on the same two columns is redundant if present — harmless, just unnecessary. The client-side `23505` error handler in `handleJoinGroup` catches this primary key violation directly; no additional constraint is needed.
+#### Phase 0 — Repo & infra foundation (Owner: TBD)
+Checklist:
+- [ ] Create `aura-mail` repo with a fresh `git init` — do not clone/copy Scam Shield's `.git` history
+- [ ] Create a **new, separate** Supabase project; generate fresh publishable/secret keys (never reuse Scam Shield's project)
+- [ ] Update `.env.example` with new variable set
+- [ ] New folder convention: `lib/email-forensics/` for header/geo/domain modules, kept separate from existing content-analysis code (`lib/scam-patterns.json`, embedding logic) so the "content" and "technical forensics" halves of the engine stay cleanly separable — this also makes it easy to answer "how is this architected" in Q&A
+- [ ] Scaffold `README.md` / `roadmap.md` / `STATUS.md` (this set of docs)
+- [ ] Branch protection on `main` mirrored from Scam Shield: PR required, ≥1 approval from someone other than the author, no self-merge, no bypass list
 
-**Key format note:** this project uses Supabase's newer publishable/secret key system (`sb_publishable_...`), not the legacy anon/service_role JWT keys — the legacy format is being deprecated. Use the Publishable key client-side; the Secret key isn't needed for basic auth, only for later privileged server-side operations. Get exact env var names from the project's "Connect" dialog rather than assuming — this has tripped up naming before (Redis, Gemini SDK) and Supabase's key system changed recently enough that older documentation/training data may reference the old anon-key pattern.
+#### Phase 1 — UI & positioning reframe (Owner: TBD)
+- Landing hero reframed around institutional email-forensics, not citizen scam-protection
+- Email input (paste raw source / upload `.eml`) becomes the **primary/default mode**
+- SMS/WhatsApp/screenshot mode kept as a clearly secondary tab, introduced only after the email story in both UI ordering and pitch narrative
+- Visual direction shifts toward an analyst/security-dashboard feel rather than a consumer safety-shield aesthetic
+- Copy pass across all in-app strings, README, and pitch language
 
-### Phase 10 — Voice note / call recording analysis (Day 3, owner: Sneha)
-Third input mode. Gemini's native audio understanding, reusing the Phase 2 pipeline. Content/pattern analysis only — not biometric voice-clone detection. `NOT_A_CALL` guard (mirrors `NOT_A_MESSAGE`). Should-Have: audio-specific content flags (scripted cadence, generic call-center phrasing).
+#### Phase 2 — Email-shaped content engine ("quick wins") (Owner: TBD)
+- Rule-based flag vocabulary updated for email fraud (`wire transfer`, `invoice`, `gift card`, `confidential`, `urgent payment`, etc.) replacing the inherited OTP/UPI-shaped SMS flags
+- New curated corpus of 15–25 email-specific scam scripts (BEC, invoice fraud, executive impersonation, credential harvesting), embedded via the inherited `precompute-embeddings.ts` pattern
+- Gemini reasoning prompt tuned to name email-specific red flags (display-name spoofing, reply-to mismatch, urgency + wire-transfer combinations)
+- **This phase is the internal-round demo core.** Positioning: "content-analysis engine is built and working; forensic header/geo/domain layer is in active development" (Phases 3–4 below)
 
-### Phase 11 — Named community confirmations (Day 4, owner: Abhimanyu)
-Circle members confirm/deny a report by name (Instagram-style, 2-3 names then "+N more"), visually distinct from the existing AI-similarity clustering badge. Reporter excluded from confirming their own report. Reporter can delete their own report; admin can delete any report in their group. Requires a stable `reportId` — confirmations stored as a Redis set keyed to that ID. Redis TTL auto-expiry on reports (60 days default).
+#### Phase 3 — Raw email ingestion pipeline (Owner: TBD — stretch for pre-internal, firm target immediately after)
+- Accept `.eml` upload and/or raw pasted email source (headers + body)
+- Parse via `mailparser`: structured headers, body, attachment list
+- `NOT_AN_EMAIL` guard, equivalent to the inherited `NOT_A_MESSAGE` / `NO_TEXT_FOUND` checks
 
-### Phase 12 — Reliability & elderly-accessible UI (Day 5, split: Sneha backend / Abhash frontend)
-- Backend: `@upstash/ratelimit` on `/api/check` (5/min, 25/day per IP), distinct friendly message for Gemini's own quota-exceeded response vs. our own rate limit.
-- Frontend: large plain-language verdict banner above the score, explanation prompt tuned for simple language, footer AI-disclaimer, responsive testing at 3+ breakpoints (phone/tablet/desktop) — this now needs re-verification against the new redesigned UI, not just the old one.
+**Architecture decision — new dedicated route, not an extension of `/api/check`:** email analysis gets its own endpoint, `app/api/analyze-email/route.ts`. The inherited `app/api/check/route.ts` stays as-is, serving only the secondary SMS/message/screenshot mode. Reasoning:
+- Different input contract entirely (raw email source/`.eml` vs. plain text/image) — branching one route on input type would tangle two unrelated request shapes together
+- Different, heavier concurrent-signal set (header parse, geolocation, domain/RDAP lookups vs. just Safe Browsing) — keeping them separate avoids the email path's extra latency/failure modes leaking into the simpler, already-stable SMS path
+- Matches the existing codebase's own convention of resource-specific routes (e.g. `app/api/circles/[circleId]/report/route.ts` is its own endpoint rather than folded into a generic handler)
+- Makes Phase 12 rate limiting straightforward to tune per-route with different budgets, since email analysis is inherently more expensive (multiple external API calls) than a text-only check
+- Keeps `/api/check` low-risk and untouched, which matters since Scam Shield's original code there is already proven in production
 
-### Phase 13 — Regression, merge, redeploy (Days 6-7, whole team tests, primary builder merges)
-Full manual regression across every phase, 1-12. Merge all feature branches to `main` in sequence, redeploy, verify the live URL end-to-end. This is where most bugs from parallel work will surface — budget real time here, don't compress it.
+#### Phase 4 — Header & authentication forensics (Owner: TBD — stretch teaser for internal)
+- Parse the `Authentication-Results` header for SPF/DKIM/DMARC verdicts — **do not** re-implement cryptographic verification; parse what the receiving mail server already computed
+- Reconstruct the `Received:` chain top-down
+- Detect Reply-To / Return-Path mismatches
+- **Stretch goal:** even a minimal working teaser (SPF/DKIM/DMARC chips on one sample email) shown live at the internal is worth more than describing it on a slide — prioritize this over polish elsewhere if time is tight
 
-### Buffer / optional stretch (Days 8-9)
-Only if genuinely ahead of schedule: cross-circle pattern matching or structured entity cross-referencing (both previously scoped as "next sprint" talking points — see Section 4). Do not start these unless Phase 9-13 are fully done and tested.
+---
 
-### Phase 14 — Demo materials refresh (Days 10-11, owner: Abdesh + primary builder)
-New demo video reflecting the redesigned UI and all new features. Updated presentation deck. Fresh screenshots of every major flow, including the new auth/groups/audio/confirm-deny features.
+### 🔵 Internal Round Checkpoint (~Day 7)
+**Target demo state:** Phases 0–2 fully working. Phase 3 ideally functional. Phase 4 shown as in-progress, ideally with a partial working teaser. Be upfront in the pitch about what's built vs. planned — internal rounds reward a credible working core plus a believable plan, not full PS coverage.
 
-### Phase 15 — Presentation & Q&A rehearsal (Days 12-13, whole team)
-Practice the live demo end-to-end, including recovery if something breaks live. Prepare for technical questions on every major decision made this build — why Redis and not a traditional database for reports, why embeddings instead of a vector DB, why concurrent Promise.all for Safe Browsing, why content-analysis-only for audio instead of biometric detection, the Chakshu/1930 routing logic, the data-minimization/TTL choices. Everyone on the team should be able to speak to at least the phases they built.
+---
 
-### Final buffer (Day 14)
-Live-URL sanity check, rest before demo day.
+### 🎯 Post-Internal → Pre-Finals Target (Days 8–30)
+
+#### Phase 5 — IP hop extraction & geolocation trace (Owner: TBD)
+- Extract IPs from the `Received:` chain, filter private/internal ranges
+- Geolocate each public hop (default: ip-api.com — free, no key, watch rate limits; ipinfo.io as a paid fallback if needed)
+- Flag VPN/proxy/hosting-provider IPs where the API surfaces that signal
+- Render a hop-by-hop trace visualization on the frontend
+
+#### Phase 6 — Domain intelligence + homograph detection (Owner: TBD)
+- RDAP lookup on sender domain (registrar, creation date) — use RDAP-over-HTTPS, not raw WHOIS/port 43, for reliability on serverless
+- Flag newly-registered domains (e.g. <30 days old) sending urgent/financial requests
+- **Innovation — homograph/lookalike-domain detection:** flag sender domains using Unicode-confusable characters (e.g. Cyrillic "а" standing in for Latin "a") or near-miss spellings against a small curated list of commonly-impersonated domains
+
+#### Phase 7 — Hybrid forensic risk engine + sub-scores + narrative (Owner: TBD)
+- Extend the inherited concurrent-signal pattern (`Promise.all` merging multiple checks) with new header/geo/domain branches alongside content analysis and Safe Browsing
+- **Innovation — sub-scores instead of one black-box number:** surface separate content-trust, header-integrity, and domain-trust components feeding the final score
+- **Innovation — synthesized attack narrative:** one additional Gemini call stitches all signals into a single plain-language sentence (e.g. "a domain registered four days ago is impersonating your CFO to request an urgent wire transfer") rather than a bare list of flags
+
+#### Phase 8 — Attachment IOC extraction (Owner: TBD)
+- `mailparser` already surfaces attachment metadata — hash attachments (SHA-256), list as indicators of compromise
+- Extend the verdict/report schema to carry IOC data
+
+#### Phase 9 — Forensic PDF report export (Owner: TBD)
+- Genuinely new capability — no PDF generation exists in the inherited codebase
+- `@react-pdf/renderer` (or `pdf-lib`) to produce a structured report: header breakdown, auth results, hop trace, domain intel, IOCs, synthesized narrative, recommended escalation
+- This is the institutional analogue of Scam Shield's Chakshu draft — built for incident-response/legal use, not individual complaint filing
+
+#### Phase 10 — Organizational accounts & campaign correlation (Owner: TBD)
+- New Supabase schema in Aura Mail's own project: `profiles`, `organizations`/`groups`, `reports` (extended with `sender_ip`, `sender_domain`)
+- Correlate reports by shared sending infrastructure, not just text-embedding similarity
+- Reuses the inherited Redis-backed reporting pattern; new correlation logic
+
+#### Phase 11 — Campaign graph view (stretch)
+- Force-directed graph linking correlated reports/domains/IPs across an organization
+- Explicitly optional — only pursue once Phases 0–10 are solid and tested. The PS explicitly calls out "graph-based relationship analysis," so this is a strong differentiator if time allows, but finals success shouldn't depend on it
+
+#### Phase 12 — Reliability & analyst-facing UX polish (Owner: TBD, split backend/frontend)
+- Rate limiting on analysis endpoint(s)
+- Verdict UI reframed for a security-analyst/institutional persona rather than the elderly/citizen framing inherited from Scam Shield
+- Responsive testing across breakpoints
+
+#### Phase 13 — Regression, merge, redeploy (whole team)
+- Full manual regression across every phase
+- Merge all feature branches to `main` in sequence, redeploy, verify the live URL end-to-end — budget real time here, this is where parallel-work bugs surface
+
+#### Phase 14 — Demo materials refresh (Owner: TBD + primary builder)
+- New demo video, updated presentation deck, fresh screenshots of every major flow
+
+#### Phase 15 — Presentation & Q&A rehearsal (whole team)
+- Practice the live demo end-to-end, including recovery if something breaks live
+- Prepare answers for: why RDAP over raw WHOIS; why parse `Authentication-Results` instead of re-verifying SPF/DKIM cryptographically; why infrastructure-based correlation over pure text similarity; the audience shift from Scam Shield's citizen framing to an institutional one; and — if asked directly — how this project relates to Scam Shield
+
+#### Final buffer
+- Live-URL sanity check, rest before demo day
 
 ---
 
 ## 4. Deliberately Deferred — Talking Points Only, Unless Ahead of Schedule
-- **Business Email Compromise / organizational circles:** existing group architecture generalizes with minimal changes. Not built — dilutes citizen-protection pitch focus.
-- **Cross-circle pattern matching:** privacy-preserving detection across unrelated circles. Real engineering, described as the natural next architectural step.
-- **Structured entity cross-referencing:** indexing phone numbers/UPI IDs across reports for harder evidence than semantic similarity.
-- **Reporter trust score:** confirm/deny accuracy over time weighting future reports.
+- **True live-inbox integration** (Gmail API push / IMAP monitoring) — manual `.eml`/paste ingestion is the demo mode; live monitoring is a credible "next step" to mention, not something to build under time pressure
+- **Cross-organization graph correlation** beyond a single org's circle
+- **Reporter trust scoring** (confirm/deny accuracy weighting future reports)
 
 ---
 
-## 5. Team Git Workflow (branch protection active, self-merge disabled)
+## 5. What Carries Over From Scam Shield vs. What's Genuinely New
 
-**Enforcement:** `main` requires a pull request AND at least 1 approval from someone other than the PR author. GitHub does not allow approving your own PR, so this guarantees a second set of eyes on everything before it reaches `main`. Bypass list is empty — applies to everyone, no exceptions.
+| Component | Status |
+|---|---|
+| Concurrent multi-signal architecture (`Promise.all` pattern) | Reused directly — the strongest inherited asset |
+| Gemini reasoning + JSON schema output | Reused, prompt retuned for email content |
+| Embedding/pattern-matching engine | Reused mechanism, **new corpus required** (email scripts, not SMS scripts) |
+| Google Safe Browsing link check | Reused unchanged |
+| Auth (Supabase) | Reused pattern, **new project/keys**, extended schema |
+| Groups/circles + Redis reporting | Reused pattern, **schema extended** for infrastructure-based correlation |
+| Chakshu-style draft generation | Reused pattern, **new institutional report format** (Phase 9) |
+| Header/auth forensics (SPF/DKIM/DMARC, `Received:` chain) | **Entirely new** |
+| IP geolocation tracing | **Entirely new** |
+| WHOIS/RDAP domain intelligence | **Entirely new** |
+| PDF report generation | **Entirely new** — nothing like this exists in the inherited codebase |
+| Homograph/graph/sub-score/narrative innovations | **Entirely new** |
 
-### ⚠️ Checklist — before starting any phase
-- [ ] `git checkout main && git pull` — never branch from a stale local copy
-- [ ] Check `STATUS.md` — see what's currently in progress and by whom before you start
-- [ ] Confirm the correct branch name for your phase (table below)
-- [ ] Give the Antigravity agent `roadmap.md` for context, use Planning Mode, read its plan before approving
-- [ ] Test locally before committing — this habit has caught a real bug in nearly every phase of this build
+---
+
+## 6. Team Git Workflow
+
+Same discipline as Scam Shield, unless the team decides otherwise: `main` requires a PR and ≥1 approval from someone other than the author; no self-merge; no bypass list.
+
+**Phase owners are intentionally left as `TBD` throughout this document** — the team is deciding who takes each phase at kickoff time rather than pre-assigning now. Whoever picks up a phase should fill in their name in both this file and `STATUS.md` before opening a branch, so "who's doing what" stays visible to the rest of the team.
+
+### Checklist — before starting any phase
+- [ ] `git checkout main && git pull`
+- [ ] Check `STATUS.md` — see what's currently in progress and by whom
+- [ ] Confirm the correct branch name for your phase
+- [ ] Test locally before committing
 - [ ] Push and open a PR — direct pushes to `main` are blocked
 - [ ] Get it approved by someone else before merging
-- [ ] Update `STATUS.md` as part of your PR (move your row to "Done & Merged," add anything future work should know) — then tell the team so everyone pulls `main` before continuing
+- [ ] Update `STATUS.md` as part of your PR, then tell the team so everyone pulls `main`
 
-**Claude repeats this checklist, including the STATUS.md step, at the top of every phase prompt from here on.**
-
-### Branches — current status and dependencies
-
+### Branches
 | Branch | Phase | Owner | Status |
 |---|---|---|---|
-| `feature/supabase-auth` | 9 (auth) | Abhimanyu | ✅ Merged |
-| `feature/circles-groups` | 9 (groups/invites) | Abhimanyu | ✅ Merged |
-| `feature/audio-input` | 10 | Sneha | **Start now** — independent of auth |
-| `feature/rate-limiting` | 12 (backend) | Sneha/Abhimanyu | **Start now** — independent |
-| `feature/accessibility-ui` | 12 (frontend) | Abhash | **Start now** — independent, pure frontend/copy work |
-| `feature/community-confirmations` | 11 | Abhimanyu | **Ready to start** — Phase 9 (auth + groups) fully merged |
+| `phase-0-setup` | 0 | TBD | Start now |
+| `phase-1-ui-reframe` | 1 | TBD | Blocked on Phase 0 |
+| `phase-2-content-engine` | 2 | TBD | Blocked on Phase 0 |
+| `phase-3-ingestion` | 3 | TBD | Blocked on Phase 0 |
+| `phase-4-header-forensics` | 4 | TBD | Blocked on Phase 3 |
+| `phase-5-geo-trace` | 5 | TBD | Blocked on Phase 4 |
+| `phase-6-domain-intel` | 6 | TBD | Blocked on Phase 4 |
+| `phase-7-risk-engine` | 7 | TBD | Blocked on Phases 5–6 |
+| `phase-8-ioc-extraction` | 8 | TBD | Blocked on Phase 3 |
+| `phase-9-pdf-report` | 9 | TBD | Blocked on Phase 7 |
+| `phase-10-org-correlation` | 10 | TBD | Blocked on Phase 0 |
+| `phase-11-graph-view` | 11 | TBD | Stretch — blocked on Phase 10 |
+| `phase-12-reliability-ux` | 12 | TBD | Independent, start any time |
 
-**`page.tsx` conflict warning:** audio input, the verdict banner, and accessibility work all touch this file. Even building in parallel, merge these branches one at a time and pull `main` between each — don't leave all four open and diverging for days at once.
-
----
-
-## 6. Tech Stack Additions (Finals)
-
-- `@supabase/supabase-js`, `@supabase/ssr`
-- `@upstash/ratelimit`
-- Supabase Postgres (profiles, groups, group_members)
-- Existing stack unchanged otherwise (Next.js, React, TypeScript, Tailwind, Gemini API, Upstash Redis, Google Safe Browsing, Vercel)
+**Shared-file conflict warning:** header forensics, geo trace, domain intel, and the risk engine all likely touch the same API route(s). Merge one at a time and pull `main` between merges — don't leave multiple diverging for days.
 
 ---
 
-## 7. Judging Criteria Mapping (Finals)
+## 7. Tech Stack Additions
 
-- **Novelty:** community propagation + real trust-verified circles + multi-modal detection + multi-signal analysis + direct bridge to a real government reporting channel
-- **Technical Execution:** auth, relational data modeling, multimodal AI input, rate limiting, graceful degradation, real threat-intel integration — now with real accounts and audio, not just the idea-round MVP
-- **Impact:** scam detection + the deepfake half of the PS title + elderly-user design consideration, fully realized rather than partially deferred
-- **Presentation:** live demo judges can watch and test directly; confident, specific technical answers in Q&A — not just a working product, but a team that can defend every decision behind it
+- `mailparser` — raw email/`.eml` parsing
+- Geolocation API client (ip-api.com default, ipinfo.io fallback)
+- RDAP-over-HTTPS client for domain intelligence
+- `@react-pdf/renderer` or `pdf-lib` — PDF report generation
+- New Supabase project (separate from Scam Shield): tables likely `profiles`, `organizations`, `org_members`, `reports` (with `sender_ip`, `sender_domain`)
+- Existing stack unchanged otherwise: Next.js, React, TypeScript, Tailwind, Gemini API, Upstash Redis, Google Safe Browsing, Vercel
+
+---
+
+## 8. Evaluation Focus Mapping
+
+*(Generic hackathon judging categories — replace with SIH's actual published rubric if available.)*
+
+- **Novelty:** multi-layer forensic correlation (content + auth + geo + domain) + organizational campaign correlation + a direct escalation artifact (forensic PDF report), not just a spam filter
+- **Technical Execution:** header/auth parsing, geolocation, domain intelligence, hybrid scoring, relational data modeling, graceful degradation — demonstrable live, not just described
+- **Impact:** institutional email-fraud defense with a forensic paper trail usable by security teams and investigators
+- **Presentation:** live demo judges can test directly; confident, specific answers on every architectural decision, including how this differs from prior work

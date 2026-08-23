@@ -48,9 +48,9 @@ function reducer(state: State, action: Action): State {
     case 'SET_INPUT':
       return { ...state, [action.field]: action.value };
     case 'SET_ACTION_STATE':
-      return { 
-        ...state, 
-        actionStatus: action.status, 
+      return {
+        ...state,
+        actionStatus: action.status,
         actionMessage: action.message,
         ...(action.newCode !== undefined && { newInviteCode: action.newCode })
       };
@@ -78,14 +78,14 @@ export function useGroups(user: any) {
     dispatch({ type: 'FETCH_START' });
     const supabase = createClient();
     const { data, error } = await supabase
-      .from('group_members')
-      .select('group_id, role, groups(id, name, invite_code)');
-    
+      .from('organization_members')
+      .select('organization_id, role, organizations(id, name, invite_code)');
+
     if (!error && data) {
       const formatted = data.map((item: any) => ({
-        id: item.groups.id,
-        name: item.groups.name,
-        invite_code: item.groups.invite_code,
+        id: item.organizations.id,
+        name: item.organizations.name,
+        invite_code: item.organizations.invite_code,
         role: item.role
       }));
 
@@ -100,7 +100,7 @@ export function useGroups(user: any) {
       dispatch({ type: 'FETCH_SUCCESS', payload: deduplicated });
       return deduplicated;
     }
-    
+
     dispatch({ type: 'FETCH_SUCCESS', payload: [] });
     return [];
   }, [user]);
@@ -121,13 +121,13 @@ export function useGroups(user: any) {
         code += charset[values[i] % charset.length];
       }
 
-      const { error } = await supabase.rpc('create_group_with_admin', {
-        group_name: state.createGroupName,
+      const { error } = await supabase.rpc('create_organization_with_admin', {
+        org_name: state.createGroupName,
         invite_code: code
       });
 
       if (error) throw error;
-      
+
       dispatch({ type: 'SET_ACTION_STATE', status: 'success', message: 'Group created successfully!', newCode: code });
       dispatch({ type: 'SET_INPUT', field: 'createGroupName', value: '' });
       await fetchGroups();
@@ -144,7 +144,7 @@ export function useGroups(user: any) {
 
     try {
       const supabase = createClient();
-      
+
       const { data: groupData, error: lookupError } = await supabase.rpc('lookup_group_by_invite_code', {
         lookup_code: state.joinInviteCode
       });
@@ -160,7 +160,7 @@ export function useGroups(user: any) {
       if (state.groups.some(g => g.id === groupId)) {
         throw new Error("You are already a member of this group.");
       }
-      
+
       const { error: joinError } = await supabase
         .from('group_members')
         .insert({
@@ -174,7 +174,7 @@ export function useGroups(user: any) {
         if (joinError.code === '23505') throw new Error("You are already a member of this group.");
         throw joinError;
       }
-      
+
       dispatch({ type: 'SET_ACTION_STATE', status: 'success', message: `Successfully joined ${groupData[0].name}!` });
       dispatch({ type: 'SET_INPUT', field: 'joinInviteCode', value: '' });
       await fetchGroups();
