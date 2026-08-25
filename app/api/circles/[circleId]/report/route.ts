@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Redis } from '@upstash/redis';
-
-const redis = new Redis({
-  url: process.env.REDIS_KV_REST_API_URL!,
-  token: process.env.REDIS_KV_REST_API_TOKEN!,
-});
+import { getRedisClient } from "@/lib/redis";
 
 export interface CircleReport {
   id: string;
@@ -45,15 +40,19 @@ export async function POST(
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    const redis = getRedisClient();
+
     // Read existing reports
     let existingReports: CircleReport[] = [];
-    try {
-      const rawData = await redis.lrange(`circle:${circleId}`, 0, -1);
-      existingReports = rawData.map((item: any) => 
-        typeof item === "string" ? JSON.parse(item) : item
-      );
-    } catch (err: any) {
-      console.warn("Could not read reports from Redis:", err);
+    if (redis) {
+      try {
+        const rawData = await redis.lrange(`circle:${circleId}`, 0, -1);
+        existingReports = rawData.map((item: any) => 
+          typeof item === "string" ? JSON.parse(item) : item
+        );
+      } catch (err: any) {
+        console.warn("Could not read reports from Redis:", err);
+      }
     }
 
     const newId = Math.random().toString(36).substring(2, 9);
@@ -91,7 +90,9 @@ export async function POST(
       timestamp: new Date().toISOString(),
     };
 
-    await redis.rpush(`circle:${circleId}`, JSON.stringify(newReport));
+    if (redis) {
+      await redis.rpush(`circle:${circleId}`, JSON.stringify(newReport));
+    }
 
     return NextResponse.json({ success: true, report: newReport });
   } catch (error: any) {

@@ -15,7 +15,10 @@ Aura Mail ingests raw email (pasted source or `.eml` upload) and produces a hybr
 
 ## 2. Current Status
 
-**Phase 0 is complete.** Repo, Supabase project + schema, Redis, and all API keys are live and verified end-to-end (local and deployed). Phase 1 is ready to start. Update this section as further phases complete — see `STATUS.md` for the live day-to-day board.
+**Phases 0 and 1 are complete.**
+- Repo, Supabase project + schema, Redis KV, and all API keys are live.
+- Complete UI & positioning reframe delivered with custom Aura Mail navigation, brand assets (`aura-mail-logo.png`, `aura-network-logo.png`, `landing-map.png`), neumorphic authentication modal, and strict Supabase auth.
+- Phase 2 (Email-shaped content engine) is ready to start. Update this section as further phases complete — see `STATUS.md` for the live day-to-day board.
 
 ---
 
@@ -36,18 +39,15 @@ Checklist:
 - [x] Branch protection on `main`: PR required, ≥1 approval from someone other than the author, no self-merge, no bypass list
 - [ ] New folder convention: `lib/email-forensics/` for header/geo/domain modules, kept separate from existing content-analysis code (`lib/scam-patterns.json`, embedding logic) — deferred naturally to when Phase 3 adds its first file there, since Git doesn't track empty folders anyway
 
-#### Phase 1 — UI & positioning reframe (Owner: TBD)
-- Landing hero reframed around institutional email-forensics, not citizen scam-protection
-- Email input (paste raw source / upload `.eml`) becomes the **primary/default mode**
-- SMS/WhatsApp/screenshot mode kept as a clearly secondary tab, introduced only after the email story in both UI ordering and pitch narrative
-- Visual direction shifts toward an analyst/security-dashboard feel rather than a consumer safety-shield aesthetic
-- Copy pass across all in-app strings, README, and pitch language
-- **Concrete branding items found still present during Phase 0 (not yet actioned — real work, not a text swap):**
-  - Homepage hero title is a two-line stacked `SCAM` / `SHIELD` layout, sized specifically around those two words — needs actual layout redesign, not a find-and-replace, once the new hero copy is decided
-  - `shield-logo.png` navbar image (and its `alt="Scam Shield Logo"` text) — needs a real new logo asset
-  - Fallback display name `"Shield Account"` in the profile dropdown
-  - The "Copy Alert to Share" feature's generated share text hardcodes `Scam Shield Analysis` and `Checked with Scam Shield (scamshield.vercel.app)` — user-facing content that gets copied and forwarded, so this needs both new copy and a real domain once one exists
-  - "Scam Radar" feature branding throughout the circles/reporting UI (flagged earlier — still open)
+#### Phase 1 — UI & positioning reframe (Owner: TBD) ✅ Complete
+Checklist:
+- [x] Landing hero reframed around institutional email-forensics and threat intelligence
+- [x] Email input & analysis positioned as the primary workflow
+- [x] Modern floating navbar component with active section indicator and account dropdown
+- [x] Replace legacy Scam Shield assets with official Aura Mail branding (`aura-mail-logo.png`, `aura-network-logo.png`, `landing-map.png`)
+- [x] Neumorphic sliding auth modal (`AuthModal.tsx`) with genuine Supabase email/password auth and real error messaging
+- [x] Remove demo user bypasses, localStorage mocks, and unconfigured social login fallbacks
+- [x] Responsive layout and styling pass across desktop, tablet, and mobile breakpoints
 
 #### Phase 2 — Email-shaped content engine ("quick wins") (Owner: TBD)
 - Rule-based flag vocabulary updated for email fraud (`wire transfer`, `invoice`, `gift card`, `confidential`, `urgent payment`, etc.) replacing the inherited OTP/UPI-shaped SMS flags
