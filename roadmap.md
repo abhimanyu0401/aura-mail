@@ -2,7 +2,7 @@
 
 **Problem Statement:** SIH PS 26106 — AI-Powered Email Threat Detection, GeoLocation and Forensic Intelligence Platform (AICTE, Cyber Security Cell)
 **Status:** Pre-build. This roadmap starts from Phase 0 — nothing shipped yet.
-**Timeline:** Internal round in ~1 week. SIH Finals in ~1 month.
+
 **Repository:** `aura-mail` starts with a completely fresh git history.
 
 ---
@@ -15,7 +15,7 @@ Aura Mail ingests raw email (pasted source or `.eml` upload) and produces a hybr
 
 ## 2. Current Status
 
-**Phases 0 and 1 are complete.**
+**Phases 0, 1, and 1.5 are complete.**
 - Repo, Supabase project + schema, Redis KV, and all API keys are live.
 - Complete UI & positioning reframe delivered with custom Aura Mail navigation, brand assets (`aura-mail-logo.png`, `aura-network-logo.png`, `landing-map.png`), neumorphic authentication modal, and strict Supabase auth.
 - Phase 2 (Email-shaped content engine) is ready to start. Update this section as further phases complete — see `STATUS.md` for the live day-to-day board.
@@ -48,6 +48,11 @@ Checklist:
 - [x] Neumorphic sliding auth modal (`AuthModal.tsx`) with genuine Supabase email/password auth and real error messaging
 - [x] Remove demo user bypasses, localStorage mocks, and unconfigured social login fallbacks
 - [x] Responsive layout and styling pass across desktop, tablet, and mobile breakpoints
+
+#### Phase 1.5 — API Resilience & UX Improvements (Owner: TBD) ✅ Complete
+Checklist:
+- [x] Implement exponential backoff retry logic for Gemini API calls to handle `503 Service Unavailable` high demand spikes
+- [x] Add frontend UI state to inform users when analysis takes longer than 5 seconds
 
 #### Phase 2 — Email-shaped content engine ("quick wins") (Owner: TBD)
 - Rule-based flag vocabulary updated for email fraud (`wire transfer`, `invoice`, `gift card`, `confidential`, `urgent payment`, etc.) replacing the inherited OTP/UPI-shaped SMS flags
