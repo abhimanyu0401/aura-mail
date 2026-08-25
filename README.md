@@ -91,4 +91,4 @@ Next.js (App Router) · React 19 · TypeScript · Tailwind CSS · Gemini API (`@
 
 ## Status
 
-Phase 0 (Infra) and Phase 1 (UI & Positioning Reframe, Auth Modernization) are complete. See [`STATUS.md`](./STATUS.md) for what's currently in progress, and [`roadmap.md`](./roadmap.md) for the full phase-by-phase plan.
+Phase 0 (Infra), Phase 1 (UI & Positioning Reframe, Auth Modernization), and Phase 1.5 (API Resilience & UX) are complete. See [`STATUS.md`](./STATUS.md) for what's currently in progress, and [`roadmap.md`](./roadmap.md) for the full phase-by-phase plan.

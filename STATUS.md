@@ -14,6 +14,7 @@ _(nothing currently active — ready for Phase 2)_
 |---|---|---|
 | 0 | Repo & infra foundation | Repo created with fresh git history; Supabase project + `profiles`/`organizations`/`organization_members` schema live (migration committed at `supabase/migrations/0001_init.sql`); Upstash Redis attached via Vercel Storage Marketplace; Gemini + Safe Browsing keys wired; branch protection on `main` live; verified end-to-end both locally and on deployed URL |
 | 1 | UI & positioning reframe + Auth overhaul | Comprehensive frontend redesign completed: modern navigation bar with live section jumping, dark glass floating navbar, brand identity assets (`aura-mail-logo.png`, `aura-network-logo.png`, `landing-map.png`), neumorphic sliding authentication modal with genuine Supabase email/password auth, complete removal of demo/mock fallbacks, responsive mobile menu & account dropdown |
+| 1.5 | API Resilience & UX | Added automatic exponential backoff retries to Gemini API calls to handle `503 Service Unavailable` demand spikes gracefully, plus frontend UI state to inform users of slow loading times instead of a blank screen. |
 
 ## ⏳ Waiting / Blocked
 
