@@ -30,6 +30,33 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
   return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 1000
+): Promise<T> {
+  let attempt = 0;
+  while (attempt < maxRetries) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      attempt++;
+      // Check if it's a rate limit or server overload error
+      const status = error?.status || error?.response?.status;
+      const message = error?.message || "";
+      const isRetryable = status === 503 || status === 429 || message.includes("503") || message.includes("429");
+      
+      if (attempt >= maxRetries || !isRetryable) {
+        throw error;
+      }
+      
+      // Exponential backoff
+      await new Promise(res => setTimeout(res, delayMs * Math.pow(2, attempt - 1)));
+    }
+  }
+  throw new Error("Max retries reached");
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -42,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     if (body.imageBase64 && body.mimeType) {
       // --- Image OCR Phase ---
-      const ocrResponse = await ai.models.generateContent({
+      const ocrResponse = await withRetry(() => ai.models.generateContent({
         model: "gemini-3.5-flash",
         contents: [
           {
@@ -55,7 +82,7 @@ export async function POST(req: NextRequest) {
             text: "Extract and return all the text visible in this image. If there is no text at all, output EXACTLY the word: NO_TEXT_FOUND. Do not add any extra commentary. If this image is not a screenshot of a text message, chat, or email — for example if it's a photo of a person, an object, or unrelated text like clothing or signage — respond with exactly NOT_A_MESSAGE instead of extracting the text.",
           },
         ],
-      });
+      }));
 
       textToAnalyze = ocrResponse.text || "";
 
@@ -155,11 +182,11 @@ export async function POST(req: NextRequest) {
     const patternMatchPromise = (async () => {
       if (scamPatterns.length === 0 || text.length <= 10) return null;
       try {
-        const embedRes = await ai.models.embedContent({
+        const embedRes = await withRetry(() => ai.models.embedContent({
           model: "gemini-embedding-001",
           contents: text,
           config: { taskType: "RETRIEVAL_QUERY" },
-        });
+        }));
         
         const queryEmbedding = embedRes.embeddings?.[0]?.values || null;
         if (!queryEmbedding) return null;
@@ -216,7 +243,7 @@ ${text}
 `;
 
       try {
-        const response = await ai.models.generateContent({
+        const response = await withRetry(() => ai.models.generateContent({
           model: "gemini-3.5-flash",
           contents: prompt,
           config: {
@@ -233,7 +260,7 @@ ${text}
               required: ["riskScore", "flags", "explanation", "financialLossLikely", "complaintDraft"],
             },
           },
-        });
+        }));
         
         const rawText = response.text || "{}";
         const cleanedJsonText = rawText.replace(/^```json\s*/, "").replace(/```$/, "").trim();

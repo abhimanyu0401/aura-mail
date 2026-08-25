@@ -250,7 +250,21 @@ export default function Home() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   
   const [loading, setLoading] = useState(false);
+  const [isSlowLoading, setIsSlowLoading] = useState(false);
   const [result, setResult] = useState<CheckResult | null>(null);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (loading) {
+      timer = setTimeout(() => {
+        setIsSlowLoading(true);
+      }, 5000);
+    } else {
+      setIsSlowLoading(false);
+    }
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const [error, setError] = useState<string | null>(null);
 
   // Reporting
@@ -589,6 +603,11 @@ export default function Home() {
                     </>
                   )}
                 </button>
+                {isSlowLoading && (
+                  <div className="mt-4 text-sm text-amber-400 bg-amber-500/10 px-4 py-2.5 rounded-xl border border-amber-500/20 animate-fade-in text-center max-w-sm">
+                    Analysis is taking longer than usual due to high demand. Please wait a moment...
+                  </div>
+                )}
               </div>
             </div>
 
