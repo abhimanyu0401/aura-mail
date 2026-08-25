@@ -2,7 +2,7 @@
 
 **Problem Statement:** SIH PS 26106 — AI-Powered Email Threat Detection, GeoLocation and Forensic Intelligence Platform (AICTE, Cyber Security Cell)
 **Status:** Pre-build. This roadmap starts from Phase 0 — nothing shipped yet.
-**Timeline:** Internal round in ~1 week. SIH Finals in ~1 month.
+
 **Repository:** `aura-mail` starts with a completely fresh git history.
 
 ---
