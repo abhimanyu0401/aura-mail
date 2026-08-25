@@ -5,21 +5,21 @@
 }
 
 :root {
-  --background: #0d0f14;
-  --foreground: #f1f5f9;
+  --background: #F0F0F0;
+  --foreground: #1A1A1A;
+  --font-poppins: var(--font-poppins), 'Poppins', sans-serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 @keyframes fade-in {
@@ -73,4 +73,78 @@ body {
 
 .box-3d-shadow-dark {
   box-shadow: 10px 14px 22px -4px rgba(15, 23, 42, 0.32), 3px 5px 10px -2px rgba(0, 0, 0, 0.15);
+}
+
+/* =========================================================================
+   AURA MAIL Initial Entrance Animation
+   ========================================================================= */
+
+@keyframes auraEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+    filter: blur(5px);
+    letter-spacing: -0.04em;
+  }
+  60% {
+    opacity: 0.95;
+    filter: blur(0.5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+    letter-spacing: -0.02em;
+  }
+}
+
+.aura-title-animated {
+  animation: auraEntrance 1.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  color: #18181B;
+  display: inline-block;
+  will-change: transform, filter, opacity;
+}
+
+/* =========================================================================
+   Magnifying Glass Scanning Animation (About Section)
+   ========================================================================= */
+
+@keyframes magScanFlight {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  25% {
+    transform: translate(-45px, -40px) rotate(-6deg);
+  }
+  50% {
+    transform: translate(-95px, -28px) rotate(-10deg);
+  }
+  75% {
+    transform: translate(-65px, 10px) rotate(4deg);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+}
+
+@keyframes scanLaserSweep {
+  0%, 100% {
+    transform: translateY(-14px);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(14px);
+    opacity: 0.9;
+  }
+}
+
+.magnifying-glass-scanner {
+  animation: magScanFlight 8s ease-in-out infinite;
+  transform-origin: 170px 114px;
+  will-change: transform;
+}
+
+.scan-laser-line {
+  animation: scanLaserSweep 2.4s ease-in-out infinite;
+  will-change: transform, opacity;
 }

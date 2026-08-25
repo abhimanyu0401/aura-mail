@@ -16,6 +16,7 @@ interface AuthContextValue {
   displayName: string | null;
   loading: boolean;
   refreshAuth: () => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextValue>({
   displayName: null,
   loading: true,
   refreshAuth: async () => {},
+  signOut: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -34,24 +36,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchDisplayName = useCallback(
     async (userId: string) => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("id", userId)
-        .single();
-      setDisplayName(data?.display_name ?? null);
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("id", userId)
+          .single();
+        setDisplayName(data?.display_name ?? null);
+      } catch {
+        setDisplayName(null);
+      }
     },
     [supabase]
   );
 
+  const signOut = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore
+    }
+    setUser(null);
+    setDisplayName(null);
+  }, [supabase]);
+
   const refreshAuth = useCallback(async () => {
-    const {
-      data: { user: currentUser },
-    } = await supabase.auth.getUser();
-    setUser(currentUser);
-    if (currentUser) {
-      await fetchDisplayName(currentUser.id);
-    } else {
+    try {
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+      setUser(currentUser);
+      if (currentUser) {
+        await fetchDisplayName(currentUser.id);
+      } else {
+        setDisplayName(null);
+      }
+    } catch {
+      setUser(null);
       setDisplayName(null);
     }
   }, [supabase, fetchDisplayName]);
@@ -61,23 +82,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshAuth().finally(() => setLoading(false));
 
     // Subscribe to auth state changes (login, logout, token refresh)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const newUser = session?.user ?? null;
-      setUser(newUser);
-      if (newUser) {
-        await fetchDisplayName(newUser.id);
-      } else {
-        setDisplayName(null);
-      }
-    });
+    try {
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const newUser = session?.user ?? null;
+        if (newUser) {
+          setUser(newUser);
+          await fetchDisplayName(newUser.id);
+        } else {
+          setUser(null);
+          setDisplayName(null);
+        }
+      });
 
-    return () => subscription.unsubscribe();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      return () => subscription.unsubscribe();
+    } catch {
+      // Ignore in dummy mode
+    }
+  }, [refreshAuth, fetchDisplayName, supabase]);
 
   return (
-    <AuthContext.Provider value={{ user, displayName, loading, refreshAuth }}>
+    <AuthContext.Provider value={{ user, displayName, loading, refreshAuth, signOut }}>
       {children}
     </AuthContext.Provider>
   );

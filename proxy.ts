@@ -4,9 +4,22 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (
+    !supabaseUrl ||
+    !supabaseUrl.startsWith("http") ||
+    supabaseUrl.includes("your_supabase") ||
+    !supabaseKey ||
+    supabaseKey.includes("your_supabase")
+  ) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
@@ -32,7 +45,11 @@ export async function proxy(request: NextRequest) {
   // request, preventing spoofed session cookies.
   // This call also triggers the automatic token refresh that keeps the
   // session alive between page loads.
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch {
+    // Ignore auth check error when offline or unconfigured
+  }
 
   // No route gating — this middleware only refreshes the session cookie.
   // Personal Check and all other routes stay fully open.

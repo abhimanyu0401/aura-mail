@@ -30,9 +30,10 @@ Full build plan and phase-by-phase status: [`roadmap.md`](./roadmap.md) · [`STA
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) v18 or later
-- A Gemini API key
+- A Gemini API key (`@google/genai`)
 - A Google Cloud API key with Safe Browsing enabled (optional — degrades gracefully)
-- A dedicated Supabase project for this app
+- A Supabase project for Postgres & Auth
+- Upstash Redis instance (for fast distributed KV report storage and circle clustering)
 - A geolocation API for IP hop lookups (default target: ip-api.com — no key required for low volume; see roadmap for fallback options)
 
 ### 1. Clone the repo
@@ -52,14 +53,21 @@ cp .env.example .env.local
 ```
 
 Fill in:
-```
-GEMINI_API_KEY=your_gemini_key_here
-SAFE_BROWSING_API_KEY=your_google_cloud_key_here   # optional
-NEXT_PUBLIC_SUPABASE_URL=your_new_aura_mail_supabase_url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_new_aura_mail_supabase_key
-```
+```env
+# Gemini API Key (Required for AI detection)
+GEMINI_API_KEY=your_gemini_api_key_here
 
-Get your Supabase URL and Publishable key from your project's Connect dialog.
+# Google Safe Browsing API Key (Optional)
+SAFE_BROWSING_API_KEY=your_safe_browsing_key_here
+
+# Supabase Credentials (Required for auth & organizations)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+
+# Upstash Redis REST Credentials (Required for circle reports KV storage)
+REDIS_KV_REST_API_URL=https://your-redis.upstash.io
+REDIS_KV_REST_API_TOKEN=your_upstash_redis_token
+```
 
 ### 4. Run locally
 ```bash
@@ -71,7 +79,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Tech stack
 
-Next.js (App Router) · React · TypeScript · Tailwind CSS · Gemini API (`@google/genai`) · Google Safe Browsing Lookup API · Supabase (Postgres + Auth, new project) · Upstash Redis · Vercel
+Next.js (App Router) · React 19 · TypeScript · Tailwind CSS · Gemini API (`@google/genai`) · Google Safe Browsing Lookup API · Supabase (Postgres + Auth) · Upstash Redis · Vercel
 
 **New for this project:**
 - `mailparser` — raw email/`.eml` header and body parsing
@@ -83,4 +91,4 @@ Next.js (App Router) · React · TypeScript · Tailwind CSS · Gemini API (`@goo
 
 ## Status
 
-This project is under active build. See [`STATUS.md`](./STATUS.md) for what's currently in progress, and [`roadmap.md`](./roadmap.md) for the full phase-by-phase plan.
+Phase 0 (Infra) and Phase 1 (UI & Positioning Reframe, Auth Modernization) are complete. See [`STATUS.md`](./STATUS.md) for what's currently in progress, and [`roadmap.md`](./roadmap.md) for the full phase-by-phase plan.
